@@ -1,0 +1,44 @@
+version: '3.7'
+
+volumes:
+  # We'll define a volume that will store the data from the postgres databases:
+  data:
+  app:
+
+services:
+  postgres:
+    build: ./postgres
+    restart: unless-stopped
+    volumes:
+      - data:/var/lib/postgresql/data
+      - ./db:/root/db
+    env_file:
+      - common-variables.env
+      - database-variables.env
+    networks:
+      - back
+    expose:
+      - "5432"
+  TEMPLATE:
+    build: ./TEMPLATE/deploy
+    restart: unless-stopped
+    volumes:
+      - app:/home/app
+      - ./TEMPLATE:/repository
+    depends_on:
+      - postgres
+    env_file:
+      - common-variables.env
+      - database-variables.env
+      - site-variables.env
+    networks:
+      - back
+      - nginx-proxy
+    expose:
+      - "80"
+
+networks:
+  back:
+  nginx-proxy:
+    external: true
+
